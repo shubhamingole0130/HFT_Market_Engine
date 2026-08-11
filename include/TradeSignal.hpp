@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include <cstdint>
+
 enum class SignalType {
     BUY,
     SELL,
@@ -18,6 +18,7 @@ struct TradeSignal {
 
     std::string TypeToString() const {
         switch (type) {
+
         case SignalType::BUY: return "BUY";
         case SignalType::SELL: return "SELL";
         default: return "HOLD";

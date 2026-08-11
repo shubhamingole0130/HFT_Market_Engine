@@ -1,50 +1,38 @@
 #pragma once
-#include <queue>
-#include <mutex>
-#include <condition_variable>
-#include <cstdint>
+#include <queue>              
+#include <mutex>              
+#include <condition_variable> 
 
-// Custom packed structure to eliminate memory padding gaps across network boundaries
-#pragma pack(push, 1)
-struct MarketTick {
-    char symbol[8];     // 8 bytes Fixed-size string array
-    double price;       // 8 bytes
-    uint32_t volume;    // 4 bytes
-    uint64_t timestamp; // 8 bytes (Microseconds)
-};
-#pragma pack(pop)
-
-template <typename T>
+template<typename T>
 class LockQueue {
 private:
     std::queue<T> queue_;
     std::mutex mutex_;
-    std::condition_variable cv_;
+    std::condition_variable cond_;
 
 public:
-    void Push(const T& item) {
+    // Pushes an item into the queue safely
+    void push(const T& item) {
         {
             std::lock_guard<std::mutex> lock(mutex_);
             queue_.push(item);
         }
-        cv_.notify_one(); // Wake up worker thread immediately
+        cond_.notify_one();
     }
 
-    bool Pop(T& item) {
+    // Pops an item safely. Blocks if queue is empty.
+    T pop() {
         std::unique_lock<std::mutex> lock(mutex_);
-        
-        // Wait until queue has data
-        cv_.wait(lock, [this]() { 
-            return !queue_.empty(); 
-        });
+        cond_.wait(lock, [this] { return !queue_.empty(); });
 
-        item = queue_.front();
+        T item = queue_.front();
         queue_.pop();
-        return true;
+        return item;
     }
 
-    bool Empty() {
+    size_t size()
+    {
         std::lock_guard<std::mutex> lock(mutex_);
-        return queue_.empty();
+        return queue_.size();
     }
 };
