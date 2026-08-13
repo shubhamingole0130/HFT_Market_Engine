@@ -25,6 +25,7 @@ jobs:
             cmake \
             g++ \
             libboost-all-dev
+            libspdlog-dev
 
       - name: Configure CMake
         run: |
